@@ -3,9 +3,10 @@
 */
 /* exported PanResp */
 /* globals whenReadyFn */
-/* jshint debug:true, camelcase:false, maxcomplexity:false */
+/* eslint camelcase:0, maxcomplexity:0, unused:0, comma-dangle:0 */
+/* eslint-disable import/no-extraneous-dependencies, comma-dangle, no-console */
 
-class PanResp {
+export class PanResp {
   constructor(fromVector, toVector, _debug) {
     if (fromVector) this.from = fromVector;
     if (toVector) this.to = toVector;
@@ -110,7 +111,7 @@ class PanResp {
       var fontresult = fontScale * zoom * 12 * hratiofull * (screenW / maxW);
       if (ratio < 1) console.log(`ratio: ${f2(ratio)} usePoly: ${f2(this.usePoly(ratio))}`);
       console.log(
-        `widths: ${maxW} ${parentW} ${width} ratio: ${f2(hratio)} scale: ${f2(scale)} fontScale: ${f2(fontScale)}`
+        `widths: ${maxW} ${parentW} ${width} ratio: ${f2(hratio)} scale: ${f2(scale)} fontScale: ${f2(fontScale)}`,
       );
       console.log(`resulting scale: ${f2(result)} fontScale: ${f2(fontresult)}`);
     }
@@ -129,7 +130,7 @@ class PanResp {
   // cols = ['#one', '#two', '#three'], colratio = [.25, .5, .25]
   // zoom = [0, 0, 0] where zoom is 1 + zoom / 10.
   // splitters = ['splitter1', 'splitter2'], active = "active"
-  updateScaleColumns(wc, calledFromResize, containerName, cols, colratios, zooms, splitters, active) {
+  updateScaleColumns(wc, calledFromResize, containerName, cols, colratios, zooms, splitters, active, useScreenWidth) {
     var self = wc;
     var ok = wcs => {
       var ret = true;
@@ -152,17 +153,19 @@ class PanResp {
     whenReadyFn(
       () => (okcw(cols) && ok(splitters)) || (active === null || !self[active] ? 'quiet' : false),
       () => {
-        var container = this.qs(wc, containerName);
+        const container = this.qs(wc, containerName);
         // Ratio of window to screen
         // Default scale in CSS: 0.0833 = (1/1200)*100
         // Maps 1/1200 css pixels into actual monitor pixels.
         // Fix extra-wide screens.  Should do the same for extra tall.
-        var sWidth =
+        const sWidth =
           window.screen.width / 9 > window.screen.height / 5 ? window.screen.height / 5 * 9 : window.screen.width;
-        var resScaler = 1200 / window.screen.width;
-        var wratio = Math.min(container.clientWidth, sWidth) / sWidth;
-        var widthScalerFixed = 1 / wratio;
-        var fixed = 1 / 1200 * 100 * resScaler * widthScalerFixed;
+        const resScaler = 1200 / window.screen.width;
+        const containerWidth = useScreenWidth ? window.screen.width : container.clientWidth;
+        // const containerHeight = useScreenWidth ? window.screen.height : container.clientHeight;
+        const wratio = Math.min(container.clientWidth, sWidth) / sWidth;
+        const widthScalerFixed = 1 / wratio;
+        const fixed = 1 / 1200 * 100 * resScaler * widthScalerFixed;
         if (self.style) self.style.setProperty('--vw-fixed-scale', fixed);
         if (cols)
           cols.forEach(contentq => {
@@ -174,11 +177,11 @@ class PanResp {
             var wdiff = Math.max(sWidth, container.clientWidth) - container.clientWidth;
             // Holds to desired pixel sizes from 100%-50% of window width of monitor, scaling down thereafter.
             var widthScaler = wratio > 0.5 ? 1 / wratio : 1 / (wratio * (wdiff / (sWidth / 2)));
-            // console.log(`widthScaler: ${widthScaler}`);
+            if (this.debug) console.log(`widthScaler: ${widthScaler}`);
             var base = 1 / 1200 * 100 * resScaler * widthScaler;
             const zoom = 1 + zooms[idx] / 10;
             var setScales = (scale, fixedp, fontScale, zoomi) => {
-              // console.log(`scale: ${scale} fontScale: ${fontScale}`);
+              if (this.debug) console.log(`scale: ${scale} fontScale: ${fontScale}`);
               content.style.setProperty('--vw-scale', scale * zoomi);
               content.style.setProperty('--vw-fixed-scale', fixedp * zoomi);
               content.style.setProperty('--font-scale', fontScale * zoomi);
@@ -188,7 +191,7 @@ class PanResp {
               return;
             }
             // ratio of panel to container
-            var hratio = content.clientWidth / container.clientWidth;
+            var hratio = content.clientWidth / containerWidth;
             var vratio = content.clientHeight / container.clientHeight;
             if (vratio < hratio) {
               hratio = vratio;
@@ -220,7 +223,8 @@ class PanResp {
               }
             }
           });
-      }, 10
+      },
+      10,
     );
   }
 
@@ -280,7 +284,7 @@ class PanResp {
         () => (title = lqs(self, path)) && (text = self[textProp]),
         () => {
           this.setTwoLineStyle(self, title, text, font, maxSize, wrapAt, adjustment);
-        }
+        },
       );
     } catch (err) {
       console.error(err);
