@@ -102,5 +102,24 @@ I’m fairly sure that the problem has to do with not having the panresp infrast
 About the default values:
 It’s somewhat arbitrary, but a reasonable default.  It just has to match up with the vw-scale / font-scale css variable defaults so that the panResp pixel units match actual default pixel sizes.  If we changed it, we’d probably want to change all of those default constants.  The algorithm makes some assumptions that may not always be true, but probably will be for us for a while.  And zoom can be used to override to some extent.  Plus the font polynomial priors can be passed in.  When needed, we can support any number of polynomial size translation curves.
 
-For cmp-create, discover, learn, panResp.update() would replace the current code at that level, above the panels and content blocks.  The content blocks just need to use the css variables.  panResp would get called once per panel, inside the loop that is already there.  We might also use it inside certain content blocks if we have splitters, such as room-edit and later game-edit / wiki.
+For the top level of apps, panResp.update() would be inserted in the current code at that level, above the panels and content blocks.  The content blocks just need to use the css variables.  panResp would get called once per panel, inside the loop that is already there.  We might also use it inside certain content blocks if we have splitters, such as room-edit and later game-edit / wiki.
+
+
+
+Describing Panresp:
+
+Is this fragile?  It took some serious effort for me to figure out how to do this, but it is fairly easy to use.  If CSS is done in a sane way that is.  I published the key panresp function as open source while I was CTO & cofounder of Yebo (originally Change My Path).
+
+What is not accessible about the following interface?  A big point of panresp (panel responsiveness) is to give much more control to the user about the sizing of panels, text, images, etc.  And to allow this to be dynamic while using the interface.  In the interface below, sometimes you may be concentrating on the outline, other times the content panel, or on the metadata.  You may want to focus on one, keep two open, etc.  You may have a huge monitor or be on a small phone.  Most interfaces severely limit flexibility, which to me is a worse usability problem.  Look at that huge ribbon in Outlook: Zoom to see text, and you'll hardly see any of it because that ribbon is going to eat a lot of screen space.  Give me a splitter so that I can increase zoom overall, then minimize (negatively zoom) the ribbon & panels until I care about them.
+
+This is what I built & why I needed it.  This supported zoom just fine, by sensing browser zoom level then reflecting that in the sizing relative to the current panresp zoom state.  The text sizing is a bit nuanced as well as it scales / zooms in a non-linear way while the chrome is linear.
+
+https://sdw.st/albums/pf/PanRespDemo.mp4
+
+Everything you see there uses vw sizing, with expressions that could use px-like or em-like numbers for ease of authoring.  There is a single function call per panel, called upon panel resize (due to browser window or splitter change), which sets a couple CSS variables that updates any number of child elements.
+
+This is where I argued toward including this built into browser CSS to avoid the implementation work & glue:
+
+https://github.com/w3c/csswg-drafts/issues/3874
+
 
